@@ -20,7 +20,7 @@ It follows best practices with **Auto Scaling**, **Load Balancing**, and **Multi
 
 ## 🏗️ Architecture Diagram
 
-![AWS 3-Tier Architecture](image_50.png)
+![AWS 3-Tier Architecture](image_50_1_73.png)
 
 ---
 
@@ -57,4 +57,4 @@ aws-3tier/
 
 ## Sample Output
 
-![Output of the web page](image-1.png)
+![Output of the web page](image-1_26.png)
