@@ -20,13 +20,12 @@ It follows best practices with **Auto Scaling**, **Load Balancing**, and **Multi
 
 ## 🏗️ Architecture Diagram
 
-![AWS 3-Tier Architecture](image.png)
+![AWS 3-Tier Architecture](image_50.png)
 
 ---
 
 ## 📂 Project Structure
 
-```bash
 aws-3tier/
 ├── main.tf
 ├── outputs.tf
