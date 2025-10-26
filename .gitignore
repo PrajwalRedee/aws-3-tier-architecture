@@ -1,0 +1,12 @@
+# Terraform state and plan files
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.zip
+*.pem
+
+# IDE/Editor files
+.vscode/
+*.log

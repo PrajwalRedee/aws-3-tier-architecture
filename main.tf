@@ -10,6 +10,13 @@ terraform {
 
 provider "aws" {
   region = var.region
+  default_tags {
+    tags = {
+      Project     = "aws-3tier-architecture"
+      Environment = "dev"
+      ManagedBy   = "Terraform"
+    }
+  }
 }
 
 #####################
@@ -202,45 +209,22 @@ resource "aws_lb_listener" "http" {
 resource "aws_launch_template" "web_template" {
   name_prefix            = "web-template-"
   image_id               = var.ami_id
-  instance_type          = "t3.micro"
+  instance_type          = var.instance_type
+  key_name               = var.key_pair_name
   vpc_security_group_ids = [aws_security_group.web_sg.id]
 
-  user_data = base64encode(<<-EOF
-    #!/bin/bash
-    exec > >(tee /var/log/user-data.log) 2>&1
-    set -x
+  # Enable IMDSv2 (Instance Metadata Service v2)
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"  # Enforce IMDSv2
+    http_put_response_hop_limit = 1
+    instance_metadata_tags      = "enabled"
+  }
 
-    # Install Apache (Amazon Linux 2023 uses dnf)
-    dnf update -y
-    dnf install -y httpd
-
-    # Enable and start Apache
-    systemctl enable httpd
-    systemctl start httpd
-
-    # Get metadata
-    INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-    AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
-
-    # Create web page
-    cat <<EOF2 > /var/www/html/index.html
-    <html>
-    <head><title>3-Tier Architecture</title></head>
-    <body style="font-family: Arial; background: #f2f2f2; text-align: center;">
-    <h1>🚀 3-Tier Architecture - Web Tier</h1>
-    <h2>Hello from Instance: $INSTANCE_ID</h2>
-    <p><strong>Availability Zone:</strong> $AZ</p>
-    <p><strong>Region:</strong> ${var.region}</p>
-    <hr>
-    <p>✅ Apache running successfully on Amazon Linux 2023!</p>
-    </body>
-    </html>
-    EOF2
-
-    systemctl restart httpd
-    echo "User data completed successfully on $(date)" >> /var/log/user-data.log
-  EOF
-  )
+  # CHANGE THIS LINE - use templatefile() instead of file()
+  user_data = base64encode(templatefile("${path.module}/scripts/user_data.sh", {
+    region = var.region
+  }))
 
   tag_specifications {
     resource_type = "instance"
@@ -291,7 +275,7 @@ resource "aws_db_instance" "db" {
   username                = var.db_user
   password                = var.db_pass
   allocated_storage       = 20
-  multi_az                = true
+  multi_az                = var.multi_az
   db_subnet_group_name    = aws_db_subnet_group.db_subnets.name
   vpc_security_group_ids  = [aws_security_group.db_sg.id]
   skip_final_snapshot     = true
